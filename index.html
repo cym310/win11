@@ -1,1 +1,976 @@
-Hello World
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1,user-scalable=no">
+<title>Windows 12 完整版</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:"Segoe UI",system-ui,-apple-system,sans-serif;user-select:none;}
+html,body{width:100%;height:100%;overflow:hidden;}
+
+.icon,.drive-card,.folder-item,.sidebar-item,.ctx-item,.start-app,.taskbar-app{transition:0.15s ease;}
+.icon:active,.drive-card:active,.folder-item:active,.sidebar-item:active,.ctx-item:active,.start-app:active,.taskbar-app:active{transform:scale(0.96);opacity:0.85;}
+
+@keyframes winOpenDesktop{0%{opacity:0;transform:translate(-50%,-40%) scale(0.95);}100%{opacity:1;transform:translate(-50%,-40%) scale(1);}}
+@keyframes winOpenMobile{0%{opacity:0;transform:translate(-50%,-50%) scale(0.85);}100%{opacity:1;transform:translate(-50%,-50%) scale(1);}}
+@keyframes minimizeAnim{0%{opacity:1;transform:scale(1);}100%{opacity:0;transform:scale(0.1) translateY(100vh);}}
+@keyframes maximizeDesktop{0%{transform:scale(1);}100%{transform:scale(1);}}
+@keyframes maximizeMobile{0%{transform:translate(-50%,-50%) scale(1);}100%{transform:translate(-50%,-50%) scale(1);}}
+@keyframes restoreDesktop{0%{transform:scale(1);}100%{transform:scale(1);}}
+@keyframes restoreMobile{0%{transform:translate(-50%,-50%) scale(1);}100%{transform:translate(-50%,-50%) scale(1);}}
+@keyframes startPopAnim{0%{opacity:0;transform:translateX(-50%) translateY(12px);}100%{opacity:1;transform:translateX(-50%) translateY(0);}}
+@keyframes rightClickAnim{0%{opacity:0;scale:0.97;}100%{opacity:1;scale:1;}}
+@keyframes hoverGlowAnim{0%{box-shadow:0 0 0 0 rgba(59,130,246,0);}50%{box-shadow:0 0 8px 2px rgba(59,130,246,0.3);}100%{box-shadow:0 0 0 0 rgba(59,130,246,0);}}
+@keyframes colorFlow{0%{background-position:0% 50%;}25%{background-position:50% 50%;}50%{background-position:100% 50%;}75%{background-position:50% 50%;}100%{background-position:0% 50%;}}
+@keyframes bgGradientFlow{0%{background-position:0% 50%;}50%{background-position:100% 50%;}100%{background-position:0% 50%;}}
+@keyframes shapeFloat{0%{transform:translateY(100vh) rotate(0deg);opacity:0;}10%{opacity:0.15;}90%{opacity:0.15;}100%{transform:translateY(-100vh) rotate(360deg);opacity:0;}}
+
+.desktop{
+    width:100vw;height:100vh;
+    background:linear-gradient(135deg,#667eea 0%,#764ba2 50%,#2c3e50 100%);
+    background-size:300% 300%;
+    animation:bgGradientFlow 18s ease infinite;
+    position:relative;
+    overflow:hidden;
+}
+.bg-shape{
+    position:absolute;
+    opacity:0;
+    animation:shapeFloat linear infinite;
+    pointer-events:none;
+}
+.shape-circle{border-radius:50%;background:rgba(255,255,255,0.1);}
+.shape-triangle{clip-path:polygon(50% 0%,0% 100%,100% 100%);background:rgba(255,255,255,0.08);}
+.shape-ellipse{border-radius:50%;background:rgba(255,255,255,0.12);}
+
+.desktop.bg-purple{background:linear-gradient(135deg,#f093fb 0%,#f5576c 50%,#c44569 100%);background-size:300% 300%;}
+.desktop.bg-white{background:linear-gradient(135deg,#f5f7fa 0%,#c3cfe2 50%,#e4eaf5 100%);background-size:300% 300%;}
+
+.desktop-icons{position:relative;width:100%;height:100%;}
+.icon{
+    position:absolute;width:72px;text-align:center;padding:8px;border-radius:8px;cursor:pointer;
+    touch-action:none;
+}
+.icon:hover{background:rgba(255,255,255,0.12);animation:hoverGlowAnim 2s infinite;}
+.icon img{width:48px;height:48px;margin-bottom:4px;}
+.icon span{font-size:12px;color:#fff;text-shadow:0 1px 2px #000;}
+
+#recycle-bin.highlight{background:rgba(255,80,80,0.25);border:2px dashed #ff6b6b;}
+
+.select-box{position:absolute;border:1px solid #60a5fa;background:rgba(59,130,246,0.1);display:none;z-index:999;}
+
+.snap-bar{position:fixed;top:0;left:0;width:100%;height:40px;background:rgba(22,28,40,0.8);backdrop-filter:blur(20px);display:none;z-index:1001;animation:snapBarShow 0.2s;}
+.snap-zone{width:33.33%;height:100%;float:left;border:1px solid rgba(255,255,255,0.1);transition:0.2s;}
+.snap-zone:hover{background:rgba(59,130,246,0.3);}
+.snap-zone.active{background:rgba(59,130,246,0.5);}
+
+.window{position:absolute;width:92vw;height:75vh;max-width:1100px;max-height:700px;background:rgba(28,36,52,0.2);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.14);border-radius:14px;box-shadow:0 8px 50px rgba(0,0,0,0.25);overflow:hidden;display:none;z-index:10;}
+.window.desktop-mode{left:50%;top:40%;transform:translate(-50%,-40%);animation:winOpenDesktop 0.26s cubic-bezier(0.22,1,0.36,1);}
+.window.mobile-mode{left:50%;top:50%;transform:translate(-50%,-50%);animation:winOpenMobile 0.3s ease;max-width:none;max-height:none;}
+.window.minimizing{animation:minimizeAnim 0.3s ease forwards;}
+.window.desktop-mode.maximizing{animation:maximizeDesktop 0.3s ease forwards;}
+.window.desktop-mode.restoring{animation:restoreDesktop 0.3s ease forwards;}
+.window.mobile-mode.maximizing{animation:maximizeMobile 0.3s ease forwards;}
+.window.mobile-mode.restoring{animation:restoreMobile 0.3s ease forwards;}
+.window.fullscreen{left:0;top:0;width:100vw;height:calc(100vh - 48px);max-width:none;max-height:none;transform:none;}
+
+.window-header{height:42px;background:rgba(255,255,255,0.06);display:flex;align-items:center;justify-content:space-between;padding:0 16px;border-bottom:1px solid rgba(255,255,255,0.1);cursor:move;}
+.window-title{display:flex;align-items:center;gap:8px;font-size:13px;color:#f5f5f5;}
+
+.win-buttons{display:flex;gap:12px;}
+.win-btn{width:20px;height:20px;border:none;background:transparent;color:#fff;font-size:16px;font-weight:300;cursor:pointer;display:grid;place-items:center;border-radius:4px;}
+.win-btn:hover{background:rgba(255,255,255,0.15);}
+.win-btn.close:hover{background:#f2484b;}
+.min::before{content:"−";}
+.max::before{content:"□";}
+.close::before{content:"×";}
+.fullscreen .max::before{content:"❐";}
+
+.path-bar{height:36px;background:rgba(255,255,255,0.05);display:flex;align-items:center;padding:0 12px;border-bottom:1px solid rgba(255,255,255,0.1);color:#eee;font-size:13px;}
+.path-item{cursor:pointer;margin:0 4px;}
+.path-split{margin:0 4px;color:#aaa;}
+
+.window-content{height:calc(100% - 78px);display:grid;grid-template-columns:200px 1fr;}
+.sidebar{background:rgba(255,255,255,0.04);padding:10px;border-right:1px solid rgba(255,255,255,0.1);}
+.sidebar-item{padding:9px 10px;border-radius:6px;margin:3px 0;cursor:pointer;font-size:13px;color:#eee;}
+.sidebar-item:hover{background:rgba(255,255,255,0.1);}
+.sidebar-item.active{background:rgba(58,130,228,0.25);}
+
+.main-area{padding:16px;color:#eee;overflow:auto;}
+.drive-card{background:rgba(255,255,255,0.06);border-radius:10px;padding:14px;margin-bottom:12px;border:1px solid rgba(255,255,255,0.08);cursor:pointer;}
+.drive-card:hover{background:rgba(255,255,255,0.1);animation:hoverGlowAnim 2s infinite;}
+
+.folder-view{display:none;}
+.folder-item{padding:8px 10px;border-radius:6px;margin:4px 0;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:8px;}
+.folder-item:hover{background:rgba(255,255,255,0.1);animation:hoverGlowAnim 2s infinite;}
+.folder-item.selected{background:rgba(59,130,246,0.3);}
+
+.taskbar{position:fixed;bottom:0;left:0;width:100%;height:48px;background:rgba(22,28,40,0.7);backdrop-filter:blur(24px);border-top:1px solid rgba(255,255,255,0.1);display:flex;align-items:center;padding:0 12px;z-index:1000;}
+.start-btn{width:34px;height:34px;border-radius:50%;border:none;background:linear-gradient(135deg,#f25022 0%,#7fba00 25%,#00a4ef 50%,#ffb900 75%,#f25022 100%);background-size:400% 400%;display:grid;place-items:center;cursor:pointer;color:#fff;font-weight:bold;box-shadow:0 2px 8px rgba(0,0,0,0.2);}
+.start-btn:hover{background-position:100% 100%;animation:hoverGlowAnim 2s infinite;}
+.start-btn:active{animation:colorFlow 0.8s ease-in-out;transform:scale(0.95);}
+.taskbar-apps{display:flex;gap:8px;margin-left:12px;}
+.taskbar-app{width:36px;height:36px;border-radius:8px;display:grid;place-items:center;cursor:pointer;}
+.taskbar-app:hover{background:rgba(255,255,255,0.15);}
+.taskbar-app.active{background:rgba(255,255,255,0.2);border-bottom:2px solid #60a5fa;}
+.taskbar-time{margin-left:auto;color:#eee;font-size:12px;cursor:pointer;padding:0 10px;}
+
+.start-menu{position:absolute;bottom:56px;left:50%;transform:translateX(-50%);width:650px;max-height:75vh;background:rgba(28,36,52,0.2);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.16);border-radius:16px;padding:20px;display:none;z-index:999;animation:startPopAnim 0.24s ease;overflow-y:auto;}
+.start-search{width:100%;padding:12px;border-radius:8px;border:none;background:rgba(255,255,255,0.08);color:#fff;margin-bottom:20px;outline:0;font-size:14px;}
+.start-section{margin-bottom:20px;}
+.start-section-title{color:#ccc;font-size:12px;margin-bottom:10px;padding-left:4px;}
+.pinned-apps{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;}
+.recommended-apps{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;}
+.all-apps{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+.start-app{text-align:center;padding:8px;border-radius:8px;color:#fff;font-size:12px;display:flex;flex-direction:column;align-items:center;gap:4px;}
+.start-app:hover{background:rgba(255,255,255,0.15);}
+.start-app img{width:32px;height:32px;}
+
+.context-menu{position:absolute;width:240px;background:rgba(15,20,30,0.94);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.12);border-radius:10px;padding:6px 0;display:none;z-index:9999;animation:rightClickAnim 0.18s ease;}
+.ctx-item,.ctx-sub{padding:7px 14px;font-size:13px;color:#eee;cursor:pointer;}
+.ctx-item:hover,.ctx-sub:hover{background:rgba(59,130,246,0.28);}
+.ctx-submenu{position:absolute;left:238px;top:0;width:220px;background:rgba(15,20,30,0.94);border-radius:10px;padding:6px 0;display:none;}
+.ctx-divider{height:1px;background:rgba(255,255,255,0.1);margin:4px 0;}
+
+/* 图标右键菜单（重命名用） */
+.icon-menu{position:absolute;width:160px;background:rgba(15,20,30,0.94);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:4px 0;display:none;z-index:10000;}
+.icon-menu-item{padding:6px 12px;font-size:13px;color:#eee;cursor:pointer;}
+.icon-menu-item:hover{background:rgba(59,130,246,0.28);}
+
+.calendar-box{position:absolute;bottom:56px;right:16px;width:340px;background:rgba(28,36,52,0.2);backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.14);border-radius:14px;padding:18px;display:none;z-index:999;color:#fff;}
+
+/* 计算器 */
+.calc-container{padding:16px;display:grid;gap:10px;grid-template-columns:repeat(4,1fr);}
+.calc-display{grid-column:1/-1;padding:12px;font-size:28px;text-align:right;background:rgba(255,255,255,0.1);border-radius:8px;color:#fff;}
+.calc-btn{padding:14px;font-size:18px;border:none;border-radius:8px;background:rgba(255,255,255,0.1);color:#fff;cursor:pointer;}
+.calc-btn:hover{background:rgba(255,255,255,0.2);}
+.calc-btn.opt{background:rgba(90,130,255,0.2);}
+.calc-btn.eq{background:rgba(40,180,80,0.3);}
+
+/* 设置 */
+.settings-list{display:grid;gap:8px;padding:10px;}
+.setting-item{padding:12px 16px;border-radius:8px;background:rgba(255,255,255,0.05);cursor:pointer;display:flex;align-items:center;gap:12px;}
+.setting-item:hover{background:rgba(255,255,255,0.1);}
+
+/* 浏览器 */
+.browser-home{padding:20px;}
+.browser-bar{display:flex;gap:8px;margin-bottom:20px;}
+.browser-url{flex:1;padding:10px;border-radius:8px;border:none;background:rgba(255,255,255,0.1);color:#fff;outline:none;}
+.browser-search{padding:10px 16px;border-radius:8px;background:rgba(90,130,255,0.2);border:none;color:#fff;cursor:pointer;}
+
+/* 记事本完整界面 */
+.notepad-wrap{display:flex;flex-direction:column;height:100%;}
+.notepad-menu{display:flex;background:rgba(255,255,255,0.08);padding:4px 8px;gap:12px;}
+.notepad-menu span{padding:4px 8px;border-radius:4px;cursor:pointer;font-size:13px;}
+.notepad-menu span:hover{background:rgba(255,255,255,0.15);}
+.notepad-area{flex:1;width:100%;padding:12px;background:rgba(255,255,255,0.08);border:none;color:#fff;resize:none;outline:none;}
+
+/* 画图软件 */
+.paint-wrap{display:flex;height:100%;gap:10px;padding:10px;}
+.paint-toolbar{width:80px;display:flex;flex-direction:column;gap:8px;}
+.paint-tool{padding:8px;text-align:center;background:rgba(255,255,255,0.08);border-radius:6px;cursor:pointer;}
+.paint-tool:hover{background:rgba(255,255,255,0.15);}
+.paint-color{width:30px;height:30px;border-radius:4px;cursor:pointer;}
+.paint-canvas{flex:1;background:#fff;border-radius:8px;}
+
+/* 应用商店 */
+.store-wrap{padding:16px;}
+.store-title{font-size:18px;margin-bottom:16px;}
+.store-grid{display:grid;grid-template-columns:repeat(auto-fill,140px);gap:12px;}
+.store-card{background:rgba(255,255,255,0.08);border-radius:8px;padding:12px;text-align:center;}
+.store-card img{width:48px;height:48px;margin-bottom:8px;}
+
+@media (max-width:768px){
+    .window.mobile-mode{width:95vw;height:80vh;}
+    .window-content{grid-template-columns:1fr;}
+    .sidebar{display:none;}
+    .start-menu{width:95vw;left:50%;transform:translateX(-50%);}
+    .pinned-apps{grid-template-columns:repeat(4,1fr);}
+    .all-apps{grid-template-columns:repeat(3,1fr);}
+    .snap-bar{display:none !important;}
+}
+</style>
+</head>
+<body>
+<div class="desktop" id="desktop">
+<div id="bg-shapes"></div>
+
+<div class="snap-bar" id="snapBar">
+    <div class="snap-zone" data-snap="left"></div>
+    <div class="snap-zone" data-snap="max"></div>
+    <div class="snap-zone" data-snap="right"></div>
+</div>
+<div class="select-box" id="selectBox"></div>
+<div class="context-menu" id="menuDesktop">
+    <div class="ctx-item" onclick="refreshDesktop()">刷新</div>
+    <div class="ctx-sub" onmouseenter="showNewMenu()" onmouseleave="hideNewMenu()">新建 ▶
+        <div class="ctx-submenu" id="subNew">
+            <div class="ctx-item" onclick="newFolder()">文件夹</div>
+            <div class="ctx-item" onclick="newTxt()">文本文档</div>
+            <div class="ctx-item" onclick="newWord()">Word 文档</div>
+            <div class="ctx-item" onclick="newExcel()">Excel 表格</div>
+            <div class="ctx-item" onclick="newPpt()">PPT 演示文稿</div>
+            <div class="ctx-item" onclick="newZip()">ZIP 压缩文件</div>
+        </div>
+    </div>
+    <div class="ctx-divider"></div>
+    <div class="ctx-item" onclick="switchBg()">切换背景</div>
+    <div class="ctx-divider"></div>
+    <div class="ctx-item">查看</div>
+    <div class="ctx-item">排序方式</div>
+    <div class="ctx-item">个性化</div>
+</div>
+<!-- 图标右键菜单 -->
+<div class="icon-menu" id="iconMenu">
+    <div class="icon-menu-item" id="renameItem">重命名</div>
+</div>
+
+<div class="desktop-icons" id="iconContainer">
+    <div class="icon" draggable="true" data-name="此电脑" style="top:15px;left:15px;" onclick="openWindow('pc')">
+        <img src="https://img.icons8.com/fluency/96/computer.png"/>
+        <span>此电脑</span>
+    </div>
+    <div class="icon" draggable="true" data-name="回收站" id="recycle-bin" style="top:90px;left:15px;" onclick="openWindow('recycle')">
+        <img src="https://img.icons8.com/fluency/96/trash.png"/>
+        <span>回收站</span>
+    </div>
+    <div class="icon" draggable="true" data-name="浏览器" style="top:165px;left:15px;" onclick="openWindow('edge')">
+        <img src="https://img.icons8.com/fluency/96/edge-browser.png"/>
+        <span>浏览器</span>
+    </div>
+    <div class="icon" draggable="true" data-name="设置" style="top:240px;left:15px;" onclick="openWindow('settings')">
+        <img src="https://img.icons8.com/fluency/96/settings.png"/>
+        <span>设置</span>
+    </div>
+    <div class="icon" draggable="true" data-name="计算器" style="top:15px;left:100px;" onclick="openWindow('calculator')">
+        <img src="https://img.icons8.com/fluency/96/calculator.png"/>
+        <span>计算器</span>
+    </div>
+    <div class="icon" draggable="true" data-name="音乐" style="top:90px;left:100px;" onclick="openWindow('music')">
+        <img src="https://img.icons8.com/fluency/96/music.png"/>
+        <span>音乐</span>
+    </div>
+    <div class="icon" draggable="true" data-name="照片" style="top:165px;left:100px;" onclick="openWindow('photos')">
+        <img src="https://img.icons8.com/fluency/96/picture.png"/>
+        <span>照片</span>
+    </div>
+    <div class="icon" draggable="true" data-name="视频" style="top:240px;left:100px;" onclick="openWindow('videos')">
+        <img src="https://img.icons8.com/fluency/96/video.png"/>
+        <span>视频</span>
+    </div>
+</div>
+
+<!-- 此电脑 -->
+<div class="window" id="win-pc" data-id="pc" data-icon="https://img.icons8.com/fluency/96/computer.png" data-title="此电脑">
+    <div class="window-header" onmousedown="winDrag(event,'pc')" ondblclick="toggleFullscreen('pc')">
+        <div class="window-title">此电脑</div>
+        <div class="win-buttons">
+            <button class="win-btn min" onclick="minimizeWindow('pc')"></button>
+            <button class="win-btn max" onclick="toggleFullscreen('pc')"></button>
+            <button class="win-btn close" onclick="closeWindow('pc')"></button>
+        </div>
+    </div>
+    <div class="path-bar" id="pathBar-pc"><span class="path-item" onclick="showHome('pc')">此电脑</span></div>
+    <div class="window-content">
+        <div class="sidebar">
+            <div class="sidebar-item" onclick="showHome('pc')">快速访问</div>
+            <div class="sidebar-item active" onclick="showHome('pc')">此电脑</div>
+            <div class="sidebar-item" onclick="openWindow('recycle')">回收站</div>
+        </div>
+        <div class="main-area" id="mainHome-pc">
+            <div class="drive-card" onclick="openDisk('pc','C')">本地磁盘 (C:)</div>
+            <div class="drive-card" onclick="openDisk('pc','D')">本地磁盘 (D:)</div>
+        </div>
+        <div class="main-area folder-view" id="viewCDisk-pc">
+            <h3>本地磁盘 C</h3>
+            <div class="folder-item" onclick="openFolder('pc','Windows','C')"><img width="24" src="https://img.icons8.com/fluency/96/folder.png">Windows</div>
+            <div class="folder-item" onclick="openFolder('pc','Program Files','C')"><img width="24" src="https://img.icons8.com/fluency/96/folder.png">Program Files</div>
+            <div class="folder-item" onclick="openFolder('pc','用户','C')"><img width="24" src="https://img.icons8.com/fluency/96/folder.png">用户</div>
+            <div class="folder-item" onclick="showHome('pc')">← 返回此电脑</div>
+        </div>
+        <div class="main-area folder-view" id="viewDDisk-pc">
+            <h3>本地磁盘 D</h3>
+            <div class="folder-item" onclick="openFolder('pc','文档','D')"><img width="24" src="https://img.icons8.com/fluency/96/folder.png">文档</div>
+            <div class="folder-item" onclick="openFolder('pc','图片','D')"><img width="24" src="https://img.icons8.com/fluency/96/picture.png">图片</div>
+            <div class="folder-item" onclick="openFolder('pc','视频','D')"><img width="24" src="https://img.icons8.com/fluency/96/video.png">视频</div>
+            <div class="folder-item" onclick="showHome('pc')">← 返回此电脑</div>
+        </div>
+        <div class="main-area folder-view" id="viewSubFolder-pc">
+            <h3 id="subFolderName-pc">子文件夹</h3>
+            <div class="folder-item"><img width="24" src="https://img.icons8.com/fluency/96/file.png">内部文件 1.txt</div>
+            <div class="folder-item"><img width="24" src="https://img.icons8.com/fluency/96/file.png">内部文件 2.docx</div>
+            <div class="folder-item" onclick="backParent('pc')">← 返回上一级</div>
+        </div>
+    </div>
+</div>
+
+<!-- 回收站 -->
+<div class="window" id="win-recycle" data-id="recycle" data-icon="https://img.icons8.com/fluency/96/trash.png" data-title="回收站">
+    <div class="window-header" onmousedown="winDrag(event,'recycle')" ondblclick="toggleFullscreen('recycle')">
+        <div class="window-title">回收站</div>
+        <div class="win-buttons">
+            <button class="win-btn min" onclick="minimizeWindow('recycle')"></button>
+            <button class="win-btn max" onclick="toggleFullscreen('recycle')"></button>
+            <button class="win-btn close" onclick="closeWindow('recycle')"></button>
+        </div>
+    </div>
+    <div class="main-area" style="text-align:center;padding-top:80px;color:#fff;"><p>回收站为空</p></div>
+</div>
+
+<!-- 浏览器 -->
+<div class="window" id="win-edge" data-id="edge" data-icon="https://img.icons8.com/fluency/96/edge-browser.png" data-title="Microsoft Edge">
+    <div class="window-header" onmousedown="winDrag(event,'edge')" ondblclick="toggleFullscreen('edge')">
+        <div class="window-title">Microsoft Edge</div>
+        <div class="win-buttons">
+            <button class="win-btn min" onclick="minimizeWindow('edge')"></button>
+            <button class="win-btn max" onclick="toggleFullscreen('edge')"></button>
+            <button class="win-btn close" onclick="closeWindow('edge')"></button>
+        </div>
+    </div>
+    <div class="main-area browser-home">
+        <div class="browser-bar">
+            <input class="browser-url" placeholder="输入网址或搜索内容">
+            <button class="browser-search">搜索</button>
+        </div>
+        <p style="text-align:center;margin-top:40px;color:#ccc;">Edge 模拟首页 · 快捷搜索可用</p>
+    </div>
+</div>
+
+<!-- 设置 -->
+<div class="window" id="win-settings" data-id="settings" data-icon="https://img.icons8.com/fluency/96/settings.png" data-title="设置">
+    <div class="window-header" onmousedown="winDrag(event,'settings')" ondblclick="toggleFullscreen('settings')">
+        <div class="window-title">设置</div>
+        <div class="win-buttons">
+            <button class="win-btn min" onclick="minimizeWindow('settings')"></button>
+            <button class="win-btn max" onclick="toggleFullscreen('settings')"></button>
+            <button class="win-btn close" onclick="closeWindow('settings')"></button>
+        </div>
+    </div>
+    <div class="main-area settings-list">
+        <div class="setting-item" onclick="alert('系统设置已打开（模拟）')">⚙️ 系统</div>
+        <div class="setting-item" onclick="alert('显示设置已打开（模拟）')">🖥️ 显示</div>
+        <div class="setting-item" onclick="alert('声音设置已打开（模拟）')">🔊 声音</div>
+        <div class="setting-item" onclick="alert('蓝牙设置已打开（模拟）')">📶 蓝牙和设备</div>
+        <div class="setting-item" onclick="alert('网络设置已打开（模拟）')">🌐 网络和 Internet</div>
+        <div class="setting-item" onclick="alert('个性化设置已打开（模拟）')">🎨 个性化</div>
+        <div class="setting-item" onclick="alert('账户设置已打开（模拟）')">👤 账户</div>
+        <div class="setting-item" onclick="alert('更新和安全已打开（模拟）')">🔄 更新和安全</div>
+    </div>
+</div>
+
+<!-- 计算器 -->
+<div class="window" id="win-calculator" data-id="calculator" data-icon="https://img.icons8.com/fluency/96/calculator.png" data-title="计算器">
+    <div class="window-header" onmousedown="winDrag(event,'calculator')" ondblclick="toggleFullscreen('calculator')">
+        <div class="window-title">计算器</div>
+        <div class="win-buttons">
+            <button class="win-btn min" onclick="minimizeWindow('calculator')"></button>
+            <button class="win-btn max" onclick="toggleFullscreen('calculator')"></button>
+            <button class="win-btn close" onclick="closeWindow('calculator')"></button>
+        </div>
+    </div>
+    <div class="main-area calc-container">
+        <div class="calc-display" id="calcDisplay">0</div>
+        <button class="calc-btn" onclick="calcInput('7')">7</button>
+        <button class="calc-btn" onclick="calcInput('8')">8</button>
+        <button class="calc-btn" onclick="calcInput('9')">9</button>
+        <button class="calc-btn opt" onclick="calcInput('/')">/</button>
+        <button class="calc-btn" onclick="calcInput('4')">4</button>
+        <button class="calc-btn" onclick="calcInput('5')">5</button>
+        <button class="calc-btn" onclick="calcInput('6')">6</button>
+        <button class="calc-btn opt" onclick="calcInput('*')">×</button>
+        <button class="calc-btn" onclick="calcInput('1')">1</button>
+        <button class="calc-btn" onclick="calcInput('2')">2</button>
+        <button class="calc-btn" onclick="calcInput('3')">3</button>
+        <button class="calc-btn opt" onclick="calcInput('-')">-</button>
+        <button class="calc-btn" onclick="calcInput('0')">0</button>
+        <button class="calc-btn" onclick="calcInput('.')">.</button>
+        <button class="calc-btn" onclick="calcClear()">C</button>
+        <button class="calc-btn opt" onclick="calcInput('+')">+</button>
+        <button class="calc-btn eq" onclick="calcEqual()" colspan="4">=</button>
+    </div>
+</div>
+
+<!-- 音乐 -->
+<div class="window" id="win-music" data-id="music" data-icon="https://img.icons8.com/fluency/96/music.png" data-title="Groove 音乐">
+    <div class="window-header" onmousedown="winDrag(event,'music')" ondblclick="toggleFullscreen('music')">
+        <div class="window-title">Groove 音乐</div>
+        <div class="win-buttons">
+            <button class="win-btn min" onclick="minimizeWindow('music')"></button>
+            <button class="win-btn max" onclick="toggleFullscreen('music')"></button>
+            <button class="win-btn close" onclick="closeWindow('music')"></button>
+        </div>
+    </div>
+    <div class="main-area" style="text-align:center;padding-top:80px;color:#fff;"><h2>Groove 音乐</h2><p style="margin-top:20px;">暂无可用音乐文件</p></div>
+</div>
+
+<!-- 照片 -->
+<div class="window" id="win-photos" data-id="photos" data-icon="https://img.icons8.com/fluency/96/picture.png" data-title="照片">
+    <div class="window-header" onmousedown="winDrag(event,'photos')" ondblclick="toggleFullscreen('photos')">
+        <div class="window-title">照片</div>
+        <div class="win-buttons">
+            <button class="win-btn min" onclick="minimizeWindow('photos')"></button>
+            <button class="win-btn max" onclick="toggleFullscreen('photos')"></button>
+            <button class="win-btn close" onclick="closeWindow('photos')"></button>
+        </div>
+    </div>
+    <div class="main-area" style="text-align:center;padding-top:80px;color:#fff;"><h2>照片</h2><p style="margin-top:20px;">相册为空，暂无照片</p></div>
+</div>
+
+<!-- 视频 -->
+<div class="window" id="win-videos" data-id="videos" data-icon="https://img.icons8.com/fluency/96/video.png" data-title="电影和电视">
+    <div class="window-header" onmousedown="winDrag(event,'videos')" ondblclick="toggleFullscreen('videos')">
+        <div class="window-title">电影和电视</div>
+        <div class="win-buttons">
+            <button class="win-btn min" onclick="minimizeWindow('videos')"></button>
+            <button class="win-btn max" onclick="toggleFullscreen('videos')"></button>
+            <button class="win-btn close" onclick="closeWindow('videos')"></button>
+        </div>
+    </div>
+    <div class="main-area" style="text-align:center;padding-top:80px;color:#fff;"><h2>电影和电视</h2><p style="margin-top:20px;">暂无视频文件</p></div>
+</div>
+
+<!-- 记事本（完整界面） -->
+<div class="window" id="win-notepad" data-id="notepad" data-icon="https://img.icons8.com/fluency/96/notepad.png" data-title="文本文档">
+    <div class="window-header" onmousedown="winDrag(event,'notepad')" ondblclick="toggleFullscreen('notepad')">
+        <div class="window-title" id="notepadTitle">文本文档.txt</div>
+        <div class="win-buttons">
+            <button class="win-btn min" onclick="minimizeWindow('notepad')"></button>
+            <button class="win-btn max" onclick="toggleFullscreen('notepad')"></button>
+            <button class="win-btn close" onclick="closeWindow('notepad')"></button>
+        </div>
+    </div>
+    <div class="main-area notepad-wrap">
+        <div class="notepad-menu">
+            <span>文件</span><span>编辑</span><span>格式</span><span>查看</span><span>帮助</span>
+        </div>
+        <textarea class="notepad-area" id="notepadContent" placeholder="在这里输入文字..."></textarea>
+    </div>
+</div>
+
+<!-- 画图（完整界面） -->
+<div class="window" id="win-paint" data-id="paint" data-icon="https://img.icons8.com/fluency/96/paint.png" data-title="画图">
+    <div class="window-header" onmousedown="winDrag(event,'paint')" ondblclick="toggleFullscreen('paint')">
+        <div class="window-title">画图</div>
+        <div class="win-buttons">
+            <button class="win-btn min" onclick="minimizeWindow('paint')"></button>
+            <button class="win-btn max" onclick="toggleFullscreen('paint')"></button>
+            <button class="win-btn close" onclick="closeWindow('paint')"></button>
+        </div>
+    </div>
+    <div class="main-area paint-wrap">
+        <div class="paint-toolbar">
+            <div class="paint-tool">画笔</div>
+            <div class="paint-tool">橡皮</div>
+            <div class="paint-tool">填充</div>
+            <div class="paint-tool">矩形</div>
+            <div class="paint-tool">圆形</div>
+            <div class="paint-color" style="background:#000;"></div>
+            <div class="paint-color" style="background:#f00;"></div>
+            <div class="paint-color" style="background:#0f0;"></div>
+            <div class="paint-color" style="background:#00f;"></div>
+        </div>
+        <canvas class="paint-canvas" id="paintCanvas"></canvas>
+    </div>
+</div>
+
+<!-- 应用商店（完整界面） -->
+<div class="window" id="win-store" data-id="store" data-icon="https://img.icons8.com/fluency/96/microsoft-store.png" data-title="应用商店">
+    <div class="window-header" onmousedown="winDrag(event,'store')" ondblclick="toggleFullscreen('store')">
+        <div class="window-title">应用商店</div>
+        <div class="win-buttons">
+            <button class="win-btn min" onclick="minimizeWindow('store')"></button>
+            <button class="win-btn max" onclick="toggleFullscreen('store')"></button>
+            <button class="win-btn close" onclick="closeWindow('store')"></button>
+        </div>
+    </div>
+    <div class="main-area store-wrap">
+        <div class="store-title">推荐应用</div>
+        <div class="store-grid">
+            <div class="store-card"><img src="https://img.icons8.com/fluency/48/edge-browser.png"><div>浏览器</div></div>
+            <div class="store-card"><img src="https://img.icons8.com/fluency/48/calculator.png"><div>计算器</div></div>
+            <div class="store-card"><img src="https://img.icons8.com/fluency/48/music.png"><div>音乐</div></div>
+            <div class="store-card"><img src="https://img.icons8.com/fluency/48/picture.png"><div>照片</div></div>
+            <div class="store-card"><img src="https://img.icons8.com/fluency/48/video.png"><div>视频</div></div>
+            <div class="store-card"><img src="https://img.icons8.com/fluency/48/settings.png"><div>设置</div></div>
+        </div>
+    </div>
+</div>
+
+<div class="start-menu" id="winStart">
+    <input class="start-search" placeholder="搜索应用、设置和文档">
+    <div class="start-section">
+        <div class="start-section-title">固定应用</div>
+        <div class="pinned-apps">
+            <div class="start-app" onclick="openWindow('pc');closeStart()"><img src="https://img.icons8.com/fluency/96/computer.png"><span>此电脑</span></div>
+            <div class="start-app" onclick="openWindow('edge');closeStart()"><img src="https://img.icons8.com/fluency/96/edge-browser.png"><span>浏览器</span></div>
+            <div class="start-app" onclick="openWindow('settings');closeStart()"><img src="https://img.icons8.com/fluency/96/settings.png"><span>设置</span></div>
+            <div class="start-app" onclick="openWindow('calculator');closeStart()"><img src="https://img.icons8.com/fluency/96/calculator.png"><span>计算器</span></div>
+            <div class="start-app" onclick="openWindow('music');closeStart()"><img src="https://img.icons8.com/fluency/96/music.png"><span>音乐</span></div>
+            <div class="start-app" onclick="openWindow('photos');closeStart()"><img src="https://img.icons8.com/fluency/96/picture.png"><span>照片</span></div>
+        </div>
+    </div>
+    <div class="start-section">
+        <div class="start-section-title">推荐</div>
+        <div class="recommended-apps">
+            <div class="start-app" onclick="openWindow('videos');closeStart()"><img src="https://img.icons8.com/fluency/96/video.png"><span>视频</span></div>
+            <div class="start-app" onclick="openWindow('recycle');closeStart()"><img src="https://img.icons8.com/fluency/96/trash.png"><span>回收站</span></div>
+        </div>
+    </div>
+    <div class="start-section">
+        <div class="start-section-title">所有应用</div>
+        <div class="all-apps">
+            <div class="start-app" onclick="openWindow('notepad');closeStart()"><img src="https://img.icons8.com/fluency/96/notepad.png"><span>记事本</span></div>
+            <div class="start-app" onclick="openWindow('paint');closeStart()"><img src="https://img.icons8.com/fluency/96/paint.png"><span>画图</span></div>
+            <div class="start-app" onclick="openWindow('store');closeStart()"><img src="https://img.icons8.com/fluency/96/microsoft-store.png"><span>应用商店</span></div>
+            <div class="start-app" onclick="alert('时钟打开');closeStart()"><img src="https://img.icons8.com/fluency/96/clock.png"><span>时钟</span></div>
+        </div>
+    </div>
+</div>
+
+<div class="calendar-box" id="calBox">
+    <h3>2026年5月29日</h3>
+    <p style="margin-top:10px;color:#ccc;">星期五</p>
+</div>
+
+<div class="taskbar">
+    <button class="start-btn" onclick="toggleStartMenu()">⊞</button>
+    <div class="taskbar-apps" id="taskbarApps"></div>
+    <div class="taskbar-time" onclick="toggleCalendar()">
+        <div id="nowTime">00:00</div>
+    </div>
+</div>
+</div>
+
+<script>
+let dragWin = null;
+let windowStates = {};
+let currentDisk = {};
+let currentPath = {};
+let bgIndex = 0;
+let isMobile = false;
+let isDraggingIcon = false;
+let fileCounter = 0;
+let renameTarget = null;
+
+// 背景粒子
+function createBgShapes(){
+    const container = document.getElementById('bg-shapes');
+    const types = ['shape-circle','shape-triangle','shape-ellipse'];
+    for(let i=0;i<25;i++){
+        const div = document.createElement('div');
+        const type = types[Math.floor(Math.random()*types.length)];
+        div.className = `bg-shape ${type}`;
+        const size = Math.random()*60+20;
+        div.style.width = size+'px';
+        div.style.height = size+'px';
+        div.style.left = Math.random()*100+'%';
+        div.style.animationDuration = (Math.random()*20+15)+'s';
+        div.style.animationDelay = Math.random()*10+'s';
+        container.appendChild(div);
+    }
+}
+createBgShapes();
+
+// 设备检测
+(function initDevice(){
+    isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    document.querySelectorAll(".window").forEach(win=>{
+        if(isMobile){
+            win.classList.add("mobile-mode");
+            win.classList.remove("desktop-mode");
+        }else{
+            win.classList.add("desktop-mode");
+            win.classList.remove("mobile-mode");
+        }
+    });
+    if(isMobile) document.getElementById("snapBar").style.display = "none";
+})();
+
+// 任务栏
+function updateTaskbar(){
+    let taskbar = document.getElementById("taskbarApps");
+    taskbar.innerHTML = "";
+    Object.keys(windowStates).forEach(id=>{
+        if(windowStates[id].open){
+            let app = document.createElement("div");
+            app.className = "taskbar-app" + (windowStates[id].visible ? " active" : "");
+            app.innerHTML = `<img width="20" src="${windowStates[id].icon}">`;
+            app.onclick = ()=>toggleWindow(id);
+            taskbar.appendChild(app);
+        }
+    });
+}
+
+// 窗口控制
+function openWindow(id){
+    let win = document.getElementById(`win-${id}`);
+    if(!win) return;
+    if(!windowStates[id]){
+        windowStates[id] = {open:true,visible:true,fullscreen:false,icon:win.dataset.icon,title:win.dataset.title};
+    }else{
+        windowStates[id].visible = true;
+    }
+    win.style.display = "block";
+    win.classList.remove("minimizing");
+    updateTaskbar();
+}
+
+function toggleWindow(id){
+    let win = document.getElementById(`win-${id}`);
+    if(!win) return;
+    if(windowStates[id].visible){
+        minimizeWindow(id);
+    }else{
+        windowStates[id].visible = true;
+        win.style.display = "block";
+        win.classList.remove("minimizing");
+        updateTaskbar();
+    }
+}
+
+function minimizeWindow(id){
+    let win = document.getElementById(`win-${id}`);
+    if(!win) return;
+    win.classList.add("minimizing");
+    windowStates[id].visible = false;
+    setTimeout(()=>{
+        win.style.display = "none";
+        win.classList.remove("minimizing");
+        updateTaskbar();
+    },300);
+}
+
+function closeWindow(id){
+    let win = document.getElementById(`win-${id}`);
+    if(!win) return;
+    win.classList.add("minimizing");
+    setTimeout(()=>{
+        win.style.display = "none";
+        win.classList.remove("minimizing","fullscreen");
+        delete windowStates[id];
+        updateTaskbar();
+    },300);
+}
+
+function toggleFullscreen(id){
+    let win = document.getElementById(`win-${id}`);
+    if(!win) return;
+    if(windowStates[id].fullscreen){
+        win.classList.add("restoring");
+        setTimeout(()=>{
+            win.classList.remove("fullscreen","restoring");
+            windowStates[id].fullscreen = false;
+        },300);
+    }else{
+        win.classList.add("maximizing");
+        setTimeout(()=>{
+            win.classList.add("fullscreen");
+            win.classList.remove("maximizing");
+            windowStates[id].fullscreen = true;
+        },300);
+    }
+}
+
+// 窗口拖拽
+function winDrag(e,id){
+    dragWin = document.getElementById(`win-${id}`);
+    const startX = e.clientX || e.touches[0].clientX;
+    const startY = e.clientY || e.touches[0].clientY;
+    const offsetX = startX - dragWin.getBoundingClientRect().left;
+    const offsetY = startY - dragWin.getBoundingClientRect().top;
+
+    function move(ev){
+        const x = ev.clientX || ev.touches[0].clientX;
+        const y = ev.clientY || ev.touches[0].clientY;
+        dragWin.style.left = (x - offsetX) + "px";
+        dragWin.style.top = (y - offsetY) + "px";
+        dragWin.style.transform = "none";
+    }
+    function up(){
+        dragWin = null;
+        document.removeEventListener("mousemove",move);
+        document.removeEventListener("mouseup",up);
+        document.removeEventListener("touchmove",move);
+        document.removeEventListener("touchend",up);
+    }
+    document.addEventListener("mousemove",move);
+    document.addEventListener("mouseup",up);
+    document.addEventListener("touchmove",move,{passive:true});
+    document.addEventListener("touchend",up);
+}
+
+// 文件夹
+function showHome(id){
+    document.getElementById(`mainHome-${id}`).style.display="block";
+    document.getElementById(`viewCDisk-${id}`).style.display="none";
+    document.getElementById(`viewDDisk-${id}`).style.display="none";
+    document.getElementById(`viewSubFolder-${id}`).style.display="none";
+    currentPath[id] = ["此电脑"];
+    currentDisk[id] = "";
+    updatePath(id);
+}
+function openDisk(id,disk){
+    showHome(id);
+    document.getElementById(`mainHome-${id}`).style.display="none";
+    document.getElementById(`view${disk}Disk-${id}`).style.display="block";
+    currentDisk[id] = disk;
+    currentPath[id] = ["此电脑",`本地磁盘 (${disk}:)`];
+    updatePath(id);
+}
+function openFolder(id,name,disk){
+    showHome(id);
+    document.getElementById(`mainHome-${id}`).style.display="none";
+    document.getElementById(`viewCDisk-${id}`).style.display="none";
+    document.getElementById(`viewDDisk-${id}`).style.display="none";
+    document.getElementById(`viewSubFolder-${id}`).style.display="block";
+    document.getElementById(`subFolderName-${id}`).innerText = name;
+    currentPath[id].push(name);
+    updatePath(id);
+}
+function backParent(id){
+    currentPath[id].pop();
+    updatePath(id);
+    if(currentPath[id].length===2){
+        if(currentDisk[id]==="C") openDisk(id,"C");
+        else openDisk(id,"D");
+    }else showHome(id);
+}
+function updatePath(id){
+    let bar = document.getElementById(`pathBar-${id}`);
+    bar.innerHTML = "";
+    currentPath[id].forEach((item,idx)=>{
+        let span = document.createElement("span");
+        span.className = "path-item";
+        span.innerText = item;
+        span.onclick = ()=>{
+            currentPath[id] = currentPath[id].slice(0,idx+1);
+            if(idx===0) showHome(id);
+            else if(idx===1){
+                if(currentDisk[id]==="C") openDisk(id,"C");
+                else openDisk(id,"D");
+            }
+            updatePath(id);
+        };
+        bar.appendChild(span);
+        if(idx!==currentPath.length-1){
+            let split = document.createElement("span");
+            split.className = "path-split";
+            split.innerText = "›";
+            bar.appendChild(split);
+        }
+    });
+}
+
+// 桌面右键菜单
+document.getElementById("desktop").addEventListener("contextmenu",e=>{
+    if(isDraggingIcon){e.preventDefault();return;}
+    e.preventDefault();
+    hideAllMenu();
+    let m = document.getElementById("menuDesktop");
+    m.style.display="block";m.style.left=e.clientX+"px";m.style.top=e.clientY+"px";
+});
+
+// 图标右键重命名
+document.getElementById("iconContainer").addEventListener("contextmenu",e=>{
+    e.preventDefault();
+    hideAllMenu();
+    renameTarget = e.currentTarget;
+    const menu = document.getElementById("iconMenu");
+    menu.style.display = "block";
+    menu.style.left = e.clientX + "px";
+    menu.style.top = e.clientY + "px";
+});
+document.getElementById("renameItem").onclick = ()=>{
+    if(!renameTarget) return;
+    const span = renameTarget.querySelector("span");
+    const newName = prompt("输入新名称：",span.textContent);
+    if(newName){
+        span.textContent = newName;
+        renameTarget.dataset.name = newName;
+    }
+    document.getElementById("iconMenu").style.display = "none";
+};
+
+function hideAllMenu(){
+    document.querySelectorAll(".context-menu,.icon-menu").forEach(m=>m.style.display="none");
+}
+function showNewMenu(){document.getElementById("subNew").style.display="block";}
+function hideNewMenu(){document.getElementById("subNew").style.display="none";}
+
+// 长按菜单
+let longPressTimer;
+document.addEventListener("touchstart",e=>{
+    if(isDraggingIcon){clearTimeout(longPressTimer);return;}
+    longPressTimer = setTimeout(()=>{
+        let t = e.touches[0];
+        hideAllMenu();
+        let m = document.getElementById("menuDesktop");
+        m.style.display="block";m.style.left=t.clientX+"px";m.style.top=t.clientY+"px";
+    },500);
+});
+document.addEventListener("touchend",()=>clearTimeout(longPressTimer));
+
+// 图标拖拽到回收站
+const icons = document.querySelectorAll('.icon');
+const recycle = document.getElementById('recycle-bin');
+icons.forEach(icon=>{
+    icon.addEventListener('dragstart',()=>{isDraggingIcon = true;});
+    icon.addEventListener('dragend',()=>{
+        isDraggingIcon = false;
+        recycle.classList.remove('highlight');
+    });
+});
+recycle.addEventListener('dragover',e=>{e.preventDefault();recycle.classList.add('highlight');});
+recycle.addEventListener('dragleave',()=>recycle.classList.remove('highlight'));
+recycle.addEventListener('drop',e=>{
+    e.preventDefault();
+    recycle.classList.remove('highlight');
+    alert('文件已移入回收站（模拟）');
+});
+
+// 背景切换
+function switchBg(){
+    bgIndex = (bgIndex + 1) % 3;
+    let d = document.getElementById("desktop");
+    d.className = "desktop";
+    if(bgIndex === 1) d.classList.add("bg-purple");
+    if(bgIndex === 2) d.classList.add("bg-white");
+}
+
+// 开始菜单
+function toggleStartMenu(){
+    let s = document.getElementById("winStart");
+    s.style.display = s.style.display==="block"?"none":"block";
+}
+function closeStart(){document.getElementById("winStart").style.display="none";}
+function toggleCalendar(){
+    let c = document.getElementById("calBox");
+    c.style.display = c.style.display==="block"?"none":"block";
+}
+
+// 时间
+function upTime(){
+    let d = new Date();
+    let h = String(d.getHours()).padStart(2,"0");
+    let m = String(d.getMinutes()).padStart(2,"0");
+    document.getElementById("nowTime").innerText = h+":"+m;
+}
+setInterval(upTime,1000);upTime();
+document.addEventListener("click",hideAllMenu);
+
+// 刷新
+function refreshDesktop(){
+    windowStates = {};currentDisk = {};currentPath = {};dragWin = null;
+    document.querySelectorAll(".window").forEach(win=>{
+        win.style.display = "none";
+        win.classList.remove("minimizing","maximizing","restoring","fullscreen");
+    });
+    document.getElementById("winStart").style.display = "none";
+    document.getElementById("calBox").style.display = "none";
+    document.getElementById("taskbarApps").innerHTML = "";
+    (function initDevice(){
+        isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        document.querySelectorAll(".window").forEach(win=>{
+            if(isMobile){
+                win.classList.add("mobile-mode");
+                win.classList.remove("desktop-mode");
+            }else{
+                win.classList.add("desktop-mode");
+                win.classList.remove("mobile-mode");
+            }
+        });
+        if(isMobile) document.getElementById("snapBar").style.display = "none";
+    })();
+}
+
+// 计算器
+let calcVal = '';
+function calcInput(v){
+    const disp = document.getElementById('calcDisplay');
+    if(calcVal==='0'&&!isNaN(v)) calcVal = '';
+    calcVal += v;
+    disp.innerText = calcVal;
+}
+function calcClear(){
+    calcVal = '';
+    document.getElementById('calcDisplay').innerText = '0';
+}
+function calcEqual(){
+    const disp = document.getElementById('calcDisplay');
+    try{
+        let exp = calcVal.replace(/×/g,'*');
+        let res = eval(exp);
+        disp.innerText = res;
+        calcVal = String(res);
+    }catch{
+        disp.innerText = '错误';
+        calcVal = '';
+    }
+}
+
+// 新建文本文档
+function newTxt(){
+    fileCounter++;
+    const name = `新建文本文档${fileCounter}.txt`;
+    const container = document.getElementById('iconContainer');
+    const icon = document.createElement('div');
+    icon.className = 'icon';
+    icon.draggable = true;
+    icon.dataset.name = name;
+    const top = 40 + (fileCounter % 6) * 75;
+    const left = 110 + Math.floor(fileCounter / 6) * 85;
+    icon.style.top = top + 'px';
+    icon.style.left = left + 'px';
+    icon.innerHTML = `
+        <img src="https://img.icons8.com/fluency/96/notepad.png"/>
+        <span>${name}</span>
+    `;
+    icon.ondblclick = ()=>{
+        document.getElementById('notepadTitle').innerText = name;
+        document.getElementById('notepadContent').value = '';
+        openWindow('notepad');
+    };
+    icon.addEventListener('contextmenu',e=>{
+        e.preventDefault();
+        hideAllMenu();
+        renameTarget = icon;
+        const menu = document.getElementById("iconMenu");
+        menu.style.display = "block";
+        menu.style.left = e.clientX + "px";
+        menu.style.top = e.clientY + "px";
+    });
+    icon.addEventListener('dragstart',()=>{isDraggingIcon = true;});
+    icon.addEventListener('dragend',()=>{isDraggingIcon = false;recycle.classList.remove('highlight');});
+    container.appendChild(icon);
+}
+
+// 其它新建
+function newFolder(){alert("已新建文件夹");}
+function newWord(){alert("已新建Word文档");}
+function newExcel(){alert("已新建Excel表格");}
+function newPpt(){alert("已新建PPT演示文稿");}
+function newZip(){alert("已新建压缩文件");}
+
+// 画图简易绘图逻辑
+const canvas = document.getElementById('paintCanvas');
+if(canvas){
+    const ctx = canvas.getContext('2d');
+    let drawing = false;
+    canvas.width = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+    canvas.onmousedown = ()=>drawing=true;
+    canvas.onmouseup = ()=>drawing=false;
+    canvas.onmousemove = e=>{
+        if(!drawing) return;
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        ctx.fillStyle = "#000";
+        ctx.beginPath();
+        ctx.arc(x,y,3,0,Math.PI*2);
+        ctx.fill();
+    };
+}
+</script>
+</body>
+</html>
